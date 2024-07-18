@@ -1,62 +1,41 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
+	"log"
 
-	"github.com/getlantern/systray"
+	"golang.design/x/clipboard"
+	"golang.design/x/hotkey"
+	"golang.design/x/hotkey/mainthread"
 )
 
 func main() {
-	// Notify the application of the below signals to be handled on shutdown
-	s := make(chan os.Signal, 1)
-	signal.Notify(s,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
-	// Goroutine to clean up prior to shutting down
-	go func() {
-		sig := <-s
-		switch sig {
-		case os.Interrupt:
-			fmt.Println("Caught SIGINT")
-			systray.Quit()
-		case syscall.SIGTERM:
-			fmt.Println("Caught SIGTERM")
-			systray.Quit()
-		case syscall.SIGQUIT:
-			fmt.Println("Caught SIGQUIT")
-			systray.Quit()
-		case syscall.SIGINT:
-			fmt.Println("Caught SIGINT")
-			systray.Quit()
-		}
-	}()
-
-	systray.Run(onReady, onExit)
-}
-
-func onReady() {
-	systray.SetIcon(getIcon("assets/task.ico"))
-	systray.SetTitle("I'm alive!")
-	systray.SetTooltip("Look at me, I'm a tooltip!")
-}
-
-func onExit() {
-	// Cleaning stuff here.
-	systray.Quit()
-	time.Sleep(2 * time.Second)
-	fmt.Println("Exiting...")
-	os.Exit(0)
-}
-
-func getIcon(s string) []byte {
-	b, err := os.ReadFile(s)
+	// Init returns an error if the package is not ready for use.
+	err := clipboard.Init()
 	if err != nil {
-		fmt.Print(err)
+		panic(err)
 	}
-	return b
+
+	mainthread.Init(fn)
+}
+
+func fn() {
+	pasteBacklogTitle := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
+	err := pasteBacklogTitle.Register()
+	if err != nil {
+		log.Fatalf("hotkey: failed to register hotkey: %v", err)
+		return
+	}
+
+	log.Printf("hotkey: %v is registered\n", pasteBacklogTitle)
+	<-pasteBacklogTitle.Keydown()
+	log.Printf("hotkey: %v is down\n", pasteBacklogTitle)
+
+	if pasteBacklogTitle.Keydown() != nil {
+		log.Printf("hotkey: %v is down again \n", pasteBacklogTitle)
+	}
+
+	if pasteBacklogTitle.Keyup() != nil {
+		clipboard.Write(clipboard.FmtText, []byte("text data"))
+		log.Printf("hotkey: %v is up\n", pasteBacklogTitle)
+	}
 }
