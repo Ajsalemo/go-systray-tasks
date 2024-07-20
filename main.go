@@ -11,7 +11,6 @@ import (
 	"golang.design/x/hotkey"
 )
 
-// TODO - clean this up to be more realistic. this is a POC
 func invokeHotKeys() {
 	pasteBacklogTitle := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl}, hotkey.KeyS)
 	pasteBacklogBody := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
