@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"log"
+	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,9 +12,17 @@ import (
 )
 
 // TODO - clean this up to be more realistic. this is a POC
-func fn() {
-	pasteBacklogTitle := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
+func invokeHotKeys() {
+	pasteBacklogTitle := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl}, hotkey.KeyS)
+	pasteBacklogBody := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
+	// Register backlog title hotkey
 	err := pasteBacklogTitle.Register()
+	if err != nil {
+		log.Fatalf("hotkey: failed to register hotkey: %v", err)
+		return
+	}
+	// Register backlog body hotkey
+	err = pasteBacklogBody.Register()
 	if err != nil {
 		log.Fatalf("hotkey: failed to register hotkey: %v", err)
 		return
@@ -24,10 +33,24 @@ func fn() {
 		select {
 		case <-pasteBacklogTitle.Keydown():
 			log.Printf("hotkey: %v is down\n", pasteBacklogTitle)
+		// Create a new backlog title and paste it to the clipboard
 		case <-pasteBacklogTitle.Keyup():
-			backlogTitle := "test | backlog | " + time.Now().Format("2006/01/02")
+			backlogTitle := os.Getenv("BACKLOG_TITLE_PREFIX") + " | " + time.Now().Format("2006/01/02")
 			clipboard.Write(clipboard.FmtText, bytes.NewBufferString(backlogTitle).Bytes())
 			log.Printf("hotkey: %v is up\n", pasteBacklogTitle)
+		case <-pasteBacklogBody.Keydown():
+			log.Printf("hotkey: %v is down\n", pasteBacklogBody)
+		// Read the file and paste it to the clipboard for the backlog body
+		case <-pasteBacklogBody.Keyup():
+			backlogTitle := os.Getenv("BACKLOG_BODY_FILE_PATH")
+			content, err := os.ReadFile(backlogTitle)
+			if err != nil {
+				log.Fatalf("failed to read file: %v", err)
+				return
+			}
+
+			clipboard.Write(clipboard.FmtText, bytes.NewBufferString(string(content)).Bytes())
+			log.Printf("hotkey: %v is up\n", pasteBacklogBody)
 		}
 	}
 }
@@ -47,7 +70,7 @@ func main() {
 	// Run these functions in a goroutine
 	// These keybind watchers are being watched on a infinite for loop. It seems better to run them in a goroutine because of this
 	go func() {
-		fn()
+		invokeHotKeys()
 	}()
 
 	log.Fatal(app.Listen(":3000"))
