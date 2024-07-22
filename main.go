@@ -16,6 +16,9 @@ func invokeHotKeys() {
 	pasteBacklogBody := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyS)
 	pasteAgedTitle := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl}, hotkey.KeyD)
 	pasteAgedBody := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyD)
+	pasteFDRTitle := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl}, hotkey.KeyF)
+	pasteFDRBody := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyF)
+
 	// Register backlog title hotkey
 	errBacklogTitle := pasteBacklogTitle.Register()
 	if errBacklogTitle != nil {
@@ -43,7 +46,22 @@ func invokeHotKeys() {
 		zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + D")
 		zap.L().Fatal(errAgedBody.Error())
 		return
-	} // Run this on a infinite loop to watch for key events
+	} 
+	// Register FDR title hotkey
+	errFDRTitle := pasteFDRTitle.Register()
+	if errFDRTitle != nil {
+		zap.L().Error("hotkey: failed to register hotkey: CTRL + F")
+		zap.L().Fatal(errFDRTitle.Error())
+		return
+	}
+	// Register FDR body hotkey
+	errFDRBody := pasteFDRBody.Register()
+	if errFDRBody != nil {
+		zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + F")
+		zap.L().Fatal(errFDRBody.Error())
+		return
+	}	
+	// Run this on a infinite loop to watch for key events
 	// Otherwise this doesn't watch further key events aside from the first one
 	for {
 		select {
@@ -90,6 +108,28 @@ func invokeHotKeys() {
 			}
 
 			clipboard.Write(clipboard.FmtText, bytes.NewBufferString(string(agedBodyContent)).Bytes())
+			zap.L().Info("hotkey: CTRL + SHIFT + D is up")
+		case <-pasteFDRTitle.Keydown():
+			zap.L().Info("hotkey: CTRL + F is down")
+		// Create a new backlog title and paste it to the clipboard
+		case <-pasteFDRTitle.Keyup():
+			FDRTitle := os.Getenv("FDR_TITLE_PREFIX") + " | " + time.Now().Format("2006/01/02")
+			clipboard.Write(clipboard.FmtText, bytes.NewBufferString(FDRTitle).Bytes())
+			zap.L().Info("hotkey: CTRL + F is up")
+		case <-pasteFDRBody.Keydown():
+			zap.L().Info("hotkey: CTRL + SHIFT + F is down")
+		// Read the file and paste it to the clipboard for the FDR body
+		case <-pasteFDRBody.Keyup():
+			FDRTitle := os.Getenv("FDR_BODY_FILE_PATH")
+			FDRBodyContent, err := os.ReadFile(FDRTitle)
+			if err != nil {
+				zap.L().Error("failed to read file for FDR_BODY_FILE_PATH")
+				zap.L().Error("is the filesytem read-only or does the file exist?")
+				zap.L().Fatal(err.Error())
+				return
+			}
+
+			clipboard.Write(clipboard.FmtText, bytes.NewBufferString(string(FDRBodyContent)).Bytes())
 			zap.L().Info("hotkey: CTRL + SHIFT + D is up")
 		}
 	}
