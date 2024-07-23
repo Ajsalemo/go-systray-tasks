@@ -20,21 +20,34 @@ func invokeHotKeys() {
 	pasteAgedBody := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyE)
 	pasteFDRTitle := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl}, hotkey.KeyR)
 	pasteFDRBody := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyR)
-
-	// Register backlog title hotkey
-	errBacklogTitle := pasteBacklogTitle.Register()
-	if errBacklogTitle != nil {
-		zap.L().Error("hotkey: failed to register hotkey: CTRL + W")
-		zap.L().Fatal(errBacklogTitle.Error())
-		return
+	
+	// If DISABLE_BACKLOG_TITLE is "true" / "TRUE" or 1 - disable the hotkey
+	// Otherwise, register backlog title hotkey
+	if os.Getenv("DISABLE_BACKLOG_TITLE") == "true" || os.Getenv("DISABLE_BACKLOG_TITLE") == "TRUE" || os.Getenv("DISABLE_BACKLOG_TITLE") == "1" {
+		zap.L().Info("hotkey: CTRL + W is disabled and unregistered")
+	} else {
+		// Register backlog title hotkey
+		errBacklogTitle := pasteBacklogTitle.Register()
+		if errBacklogTitle != nil {
+			zap.L().Error("hotkey: failed to register hotkey: CTRL + W")
+			zap.L().Fatal(errBacklogTitle.Error())
+			return
+		}
+	}	
+	// If DISABLE_BACKLOG_BODY is "true" / "TRUE" or 1 - disable the hotkey
+	// Otherwise, register backlog body hotkey
+	if os.Getenv("DISABLE_BACKLOG_BODY") == "true" || os.Getenv("DISABLE_BACKLOG_BODY") == "TRUE" || os.Getenv("DISABLE_BACKLOG_BODY") == "1" {
+		zap.L().Info("hotkey: CTRL + SHIFT + W is disabled and unregistered")
+	} else {
+		// Register backlog body hotkey
+		errBacklogBody := pasteBacklogBody.Register()
+		if errBacklogBody != nil {
+			zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + W")
+			zap.L().Fatal(errBacklogBody.Error())
+			return
+		}
 	}
-	// Register backlog body hotkey
-	errBacklogBody := pasteBacklogBody.Register()
-	if errBacklogBody != nil {
-		zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + W")
-		zap.L().Fatal(errBacklogBody.Error())
-		return
-	}
+	// TODO - Add a check for the environment variable to disable the hotkey
 	// Register aged title hotkey
 	errAgedTitle := pasteAgedTitle.Register()
 	if errAgedTitle != nil {
@@ -48,7 +61,7 @@ func invokeHotKeys() {
 		zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + E")
 		zap.L().Fatal(errAgedBody.Error())
 		return
-	} 
+	}
 	// Register FDR title hotkey
 	errFDRTitle := pasteFDRTitle.Register()
 	if errFDRTitle != nil {
@@ -62,7 +75,8 @@ func invokeHotKeys() {
 		zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + R")
 		zap.L().Fatal(errFDRBody.Error())
 		return
-	}	
+	}
+
 	// Run this on a infinite loop to watch for key events
 	// Otherwise this doesn't watch further key events aside from the first one
 	for {
