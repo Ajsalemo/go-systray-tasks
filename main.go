@@ -30,7 +30,7 @@ func invokeHotKeys() {
 		errBacklogTitle := pasteBacklogTitle.Register()
 		if errBacklogTitle != nil {
 			zap.L().Error("hotkey: failed to register hotkey: CTRL + W")
-			zap.L().Fatal(errBacklogTitle.Error())
+			zap.L().Error(errBacklogTitle.Error())
 			return
 		}
 	}	
@@ -43,38 +43,59 @@ func invokeHotKeys() {
 		errBacklogBody := pasteBacklogBody.Register()
 		if errBacklogBody != nil {
 			zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + W")
-			zap.L().Fatal(errBacklogBody.Error())
+			zap.L().Error(errBacklogBody.Error())
 			return
 		}
 	}
-	// TODO - Add a check for the environment variable to disable the hotkey
-	// Register aged title hotkey
-	errAgedTitle := pasteAgedTitle.Register()
-	if errAgedTitle != nil {
-		zap.L().Error("hotkey: failed to register hotkey: CTRL + E")
-		zap.L().Fatal(errAgedTitle.Error())
-		return
+	// If DISABLE_AGED_TITLE is "true" / "TRUE" or 1 - disable the hotkey
+	// Otherwise, register aged title hotkey
+	if os.Getenv("DISABLE_AGED_TITLE") == "true" || os.Getenv("DISABLE_AGED_TITLE") == "TRUE" || os.Getenv("DISABLE_AGED_TITLE") == "1" {
+		zap.L().Info("hotkey: CTRL + E is disabled and unregistered")
+	} else {	
+		errAgedTitle := pasteAgedTitle.Register()
+		if errAgedTitle != nil {
+			zap.L().Error("hotkey: failed to register hotkey: CTRL + E")
+			zap.L().Error(errAgedTitle.Error())
+			return
+		}
 	}
-	// Register aged body hotkey
-	errAgedBody := pasteAgedBody.Register()
-	if errAgedBody != nil {
-		zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + E")
-		zap.L().Fatal(errAgedBody.Error())
-		return
+	// If DISABLE_AGED_BODY is "true" / "TRUE" or 1 - disable the hotkey
+	// Otherwise, register aged body hotkey
+	if os.Getenv("DISABLE_AGED_BODY") == "true" || os.Getenv("DISABLE_AGED_BODY") == "TRUE" || os.Getenv("DISABLE_AGED_BODY") == "1" {
+		zap.L().Info("hotkey: CTRL + SHIFT + E is disabled and unregistered")
+	} else {
+		// Register aged body hotkey
+		errAgedBody := pasteAgedBody.Register()
+		if errAgedBody != nil {
+			zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + E")
+			zap.L().Error(errAgedBody.Error())
+			return
+		}
 	}
-	// Register FDR title hotkey
-	errFDRTitle := pasteFDRTitle.Register()
-	if errFDRTitle != nil {
-		zap.L().Error("hotkey: failed to register hotkey: CTRL + R")
-		zap.L().Fatal(errFDRTitle.Error())
-		return
+	// If DISABLE_FDR_TITLE is "true" / "TRUE" or 1 - disable the hotkey
+	// Otherwise, register aged title hotkey
+	if os.Getenv("DISABLE_FDR_TITLE") == "true" || os.Getenv("DISABLE_FDR_TITLE") == "TRUE" || os.Getenv("DISABLE_FDR_TITLE") == "1" {
+		zap.L().Info("hotkey: CTRL + SHIFT + E is disabled and unregistered")
+	} else {
+		// Register FDR title hotkey
+		errFDRTitle := pasteFDRTitle.Register()
+		if errFDRTitle != nil {
+			zap.L().Error("hotkey: failed to register hotkey: CTRL + R")
+			zap.L().Error(errFDRTitle.Error())
+			return
+		}
 	}
-	// Register FDR body hotkey
-	errFDRBody := pasteFDRBody.Register()
-	if errFDRBody != nil {
-		zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + R")
-		zap.L().Fatal(errFDRBody.Error())
-		return
+	// If DISABLE_FDR_BODY is "true" / "TRUE" or 1 - disable the hotkey
+	// Otherwise, register aged body hotkey
+	if os.Getenv("DISABLE_FDR_BODY") == "true" || os.Getenv("DISABLE_FDR_BODY") == "TRUE" || os.Getenv("DISABLE_FDR_BODY") == "1" {
+		zap.L().Info("hotkey: CTRL + SHIFT + R is disabled and unregistered")
+	} else {
+		errFDRBody := pasteFDRBody.Register()
+		if errFDRBody != nil {
+			zap.L().Error("hotkey: failed to register hotkey: CTRL + SHIFT + R")
+			zap.L().Error(errFDRBody.Error())
+			return
+		}
 	}
 
 	// Run this on a infinite loop to watch for key events
@@ -97,7 +118,7 @@ func invokeHotKeys() {
 			if err != nil {
 				zap.L().Error("failed to read file for BACKLOG_BODY_FILE_PATH")
 				zap.L().Error("is the filesytem read-only or does the file exist?")
-				zap.L().Fatal(err.Error())
+				zap.L().Error(err.Error())
 				return
 			}
 
@@ -119,7 +140,7 @@ func invokeHotKeys() {
 			if err != nil {
 				zap.L().Error("failed to read file for AGED_BODY_FILE_PATH")
 				zap.L().Error("is the filesytem read-only or does the file exist?")
-				zap.L().Fatal(err.Error())
+				zap.L().Error(err.Error())
 				return
 			}
 
@@ -141,7 +162,7 @@ func invokeHotKeys() {
 			if err != nil {
 				zap.L().Error("failed to read file for FDR_BODY_FILE_PATH")
 				zap.L().Error("is the filesytem read-only or does the file exist?")
-				zap.L().Fatal(err.Error())
+				zap.L().Error(err.Error())
 				return
 			}
 
@@ -166,13 +187,19 @@ func main() {
 	// TODO - expose pprof endpoints for debugging/metrics to see if these for loops are going to cause a problem
 	app.Get("/", controllers.IndexController)
 	app.Get("/api/v1/version", controllers.VersionController)
+	app.Get("/api/v1/env", controllers.EnvController)
 	// Run these functions in a goroutine
 	// These keybind watchers are being watched on a infinite for loop. It seems better to run them in a goroutine because of this
 	go func() {
 		invokeHotKeys()
 	}()
-	// Change this to a not commonly used port to avoid issues with other local services
-	fiberErr := app.Listen(":3090")
+	// Change this to a not commonly used port by default to avoid issues with other local services
+	portEnvVar := os.Getenv("PORT")
+	if portEnvVar == "" {
+		portEnvVar = "3080"
+	}
+
+	fiberErr := app.Listen(":" + portEnvVar)
 
 	if fiberErr != nil {
 		zap.L().Fatal(fiberErr.Error())
