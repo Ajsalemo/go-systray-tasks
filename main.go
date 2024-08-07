@@ -114,8 +114,8 @@ func invokeHotKeys() {
 			zap.L().Info("hotkey: CTRL + SHIFT + W is down")
 		// Read the file and paste it to the clipboard for the backlog body
 		case <-pasteBacklogBody.Keyup():
-			backlogTitle := os.Getenv("BACKLOG_BODY_FILE_PATH")
-			backlogBodyContent, err := os.ReadFile(backlogTitle)
+			backlogBodyFilePath := os.Getenv("BACKLOG_BODY_FILE_PATH")
+			backlogBodyContent, err := os.ReadFile(backlogBodyFilePath)
 			if err != nil {
 				zap.L().Error("failed to read file for BACKLOG_BODY_FILE_PATH")
 				zap.L().Error("is the filesytem read-only or does the file exist?")
@@ -136,8 +136,8 @@ func invokeHotKeys() {
 			zap.L().Info("hotkey: CTRL + SHIFT + E is down")
 		// Read the file and paste it to the clipboard for the aged body
 		case <-pasteAgedBody.Keyup():
-			agedTitle := os.Getenv("AGED_BODY_FILE_PATH")
-			agedBodyContent, err := os.ReadFile(agedTitle)
+			agedBodyFilePath := os.Getenv("AGED_BODY_FILE_PATH")
+			agedBodyContent, err := os.ReadFile(agedBodyFilePath)
 			if err != nil {
 				zap.L().Error("failed to read file for AGED_BODY_FILE_PATH")
 				zap.L().Error("is the filesytem read-only or does the file exist?")
@@ -158,8 +158,8 @@ func invokeHotKeys() {
 			zap.L().Info("hotkey: CTRL + SHIFT + R is down")
 		// Read the file and paste it to the clipboard for the FDR body
 		case <-pasteFDRBody.Keyup():
-			FDRTitle := os.Getenv("FDR_BODY_FILE_PATH")
-			FDRBodyContent, err := os.ReadFile(FDRTitle)
+			fdrBodyFilePath := os.Getenv("FDR_BODY_FILE_PATH")
+			FDRBodyContent, err := os.ReadFile(fdrBodyFilePath)
 			if err != nil {
 				zap.L().Error("failed to read file for FDR_BODY_FILE_PATH")
 				zap.L().Error("is the filesytem read-only or does the file exist?")
