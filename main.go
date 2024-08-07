@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"go.uber.org/zap"
 	"golang.design/x/clipboard"
 	"golang.design/x/hotkey"
@@ -20,7 +21,7 @@ func invokeHotKeys() {
 	pasteAgedBody := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyE)
 	pasteFDRTitle := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl}, hotkey.KeyR)
 	pasteFDRBody := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl, hotkey.ModShift}, hotkey.KeyR)
-	
+
 	// If DISABLE_BACKLOG_TITLE is "true" / "TRUE" or 1 - disable the hotkey
 	// Otherwise, register backlog title hotkey
 	if os.Getenv("DISABLE_BACKLOG_TITLE") == "true" || os.Getenv("DISABLE_BACKLOG_TITLE") == "TRUE" || os.Getenv("DISABLE_BACKLOG_TITLE") == "1" {
@@ -33,7 +34,7 @@ func invokeHotKeys() {
 			zap.L().Error(errBacklogTitle.Error())
 			return
 		}
-	}	
+	}
 	// If DISABLE_BACKLOG_BODY is "true" / "TRUE" or 1 - disable the hotkey
 	// Otherwise, register backlog body hotkey
 	if os.Getenv("DISABLE_BACKLOG_BODY") == "true" || os.Getenv("DISABLE_BACKLOG_BODY") == "TRUE" || os.Getenv("DISABLE_BACKLOG_BODY") == "1" {
@@ -51,7 +52,7 @@ func invokeHotKeys() {
 	// Otherwise, register aged title hotkey
 	if os.Getenv("DISABLE_AGED_TITLE") == "true" || os.Getenv("DISABLE_AGED_TITLE") == "TRUE" || os.Getenv("DISABLE_AGED_TITLE") == "1" {
 		zap.L().Info("hotkey: CTRL + E is disabled and unregistered")
-	} else {	
+	} else {
 		errAgedTitle := pasteAgedTitle.Register()
 		if errAgedTitle != nil {
 			zap.L().Error("hotkey: failed to register hotkey: CTRL + E")
@@ -184,6 +185,7 @@ func main() {
 	}
 
 	app := fiber.New()
+	app.Use(pprof.New())
 	// TODO - expose pprof endpoints for debugging/metrics to see if these for loops are going to cause a problem
 	app.Get("/", controllers.IndexController)
 	app.Get("/api/v1/version", controllers.VersionController)
