@@ -115,6 +115,12 @@ func invokeHotKeys() {
 		// Read the file and paste it to the clipboard for the backlog body
 		case <-pasteBacklogBody.Keyup():
 			backlogBodyFilePath := os.Getenv("BACKLOG_BODY_FILE_PATH")
+			// If this environment variable isn't set then lookup from the current directory
+			if backlogBodyFilePath == "" {
+				zap.L().Warn("BACKLOG_BODY_FILE_PATH is not set, looking up from the current directory")
+				backlogBodyFilePath = "./backlog_body.txt"
+			}
+
 			backlogBodyContent, err := os.ReadFile(backlogBodyFilePath)
 			if err != nil {
 				zap.L().Error("failed to read file for BACKLOG_BODY_FILE_PATH")
@@ -137,6 +143,12 @@ func invokeHotKeys() {
 		// Read the file and paste it to the clipboard for the aged body
 		case <-pasteAgedBody.Keyup():
 			agedBodyFilePath := os.Getenv("AGED_BODY_FILE_PATH")
+			// If this environment variable isn't set then lookup from the current directory
+			if agedBodyFilePath == "" {
+				zap.L().Warn("AGED_BODY_FILE_PATH is not set, looking up from the current directory")
+				agedBodyFilePath = "./aged_body.txt"
+			}
+
 			agedBodyContent, err := os.ReadFile(agedBodyFilePath)
 			if err != nil {
 				zap.L().Error("failed to read file for AGED_BODY_FILE_PATH")
@@ -159,6 +171,12 @@ func invokeHotKeys() {
 		// Read the file and paste it to the clipboard for the FDR body
 		case <-pasteFDRBody.Keyup():
 			fdrBodyFilePath := os.Getenv("FDR_BODY_FILE_PATH")
+			// If this environment variable isn't set then lookup from the current directory
+			if fdrBodyFilePath == "" {
+				zap.L().Warn("AGED_BODY_FILE_PATH is not set, looking up from the current directory")
+				fdrBodyFilePath = "./aged_body.txt"
+			}
+
 			FDRBodyContent, err := os.ReadFile(fdrBodyFilePath)
 			if err != nil {
 				zap.L().Error("failed to read file for FDR_BODY_FILE_PATH")
