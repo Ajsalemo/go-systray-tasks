@@ -11,8 +11,11 @@ import (
 	"golang.design/x/clipboard"
 	"golang.design/x/hotkey"
 
+	constants "gtpl/constants"
 	controllers "gtpl/controllers"
 )
+
+var constant = constants.Constants.EnvVar
 
 func invokeHotKeys() {
 	pasteBacklogTitle := hotkey.New([]hotkey.Modifier{hotkey.ModCtrl}, hotkey.KeyW)
@@ -107,21 +110,14 @@ func invokeHotKeys() {
 			zap.L().Info("hotkey: CTRL + W is down")
 		// Create a new backlog title and paste it to the clipboard
 		case <-pasteBacklogTitle.Keyup():
-			backlogTitle := os.Getenv("BACKLOG_TITLE_PREFIX") + " | " + time.Now().Format("2006/01/02")
+			backlogTitle := constant["BACKLOG_TITLE_PREFIX"] + " | " + time.Now().Format("2006/01/02")
 			clipboard.Write(clipboard.FmtText, bytes.NewBufferString(backlogTitle).Bytes())
 			zap.L().Info("hotkey: CTRL + W is up")
 		case <-pasteBacklogBody.Keydown():
 			zap.L().Info("hotkey: CTRL + SHIFT + W is down")
 		// Read the file and paste it to the clipboard for the backlog body
 		case <-pasteBacklogBody.Keyup():
-			backlogBodyFilePath := os.Getenv("BACKLOG_BODY_FILE_PATH")
-			// If this environment variable isn't set then lookup from the current directory
-			if backlogBodyFilePath == "" {
-				zap.L().Warn("BACKLOG_BODY_FILE_PATH is not set, looking up from the current directory")
-				backlogBodyFilePath = "./backlog_body.txt"
-			}
-
-			backlogBodyContent, err := os.ReadFile(backlogBodyFilePath)
+			backlogBodyContent, err := os.ReadFile(constant["BACKLOG_BODY_FILE_PATH"])
 			if err != nil {
 				zap.L().Error("failed to read file for BACKLOG_BODY_FILE_PATH")
 				zap.L().Error("is the filesytem read-only or does the file exist?")
@@ -135,21 +131,14 @@ func invokeHotKeys() {
 			zap.L().Info("hotkey: CTRL + E is down")
 		// Create a new backlog title and paste it to the clipboard
 		case <-pasteAgedTitle.Keyup():
-			agedTitle := os.Getenv("AGED_TITLE_PREFIX") + " | " + time.Now().Format("2006/01/02")
+			agedTitle := constant["AGED_TITLE_PREFIX"] + " | " + time.Now().Format("2006/01/02")
 			clipboard.Write(clipboard.FmtText, bytes.NewBufferString(agedTitle).Bytes())
 			zap.L().Info("hotkey: CTRL + E is up")
 		case <-pasteAgedBody.Keydown():
 			zap.L().Info("hotkey: CTRL + SHIFT + E is down")
 		// Read the file and paste it to the clipboard for the aged body
 		case <-pasteAgedBody.Keyup():
-			agedBodyFilePath := os.Getenv("AGED_BODY_FILE_PATH")
-			// If this environment variable isn't set then lookup from the current directory
-			if agedBodyFilePath == "" {
-				zap.L().Warn("AGED_BODY_FILE_PATH is not set, looking up from the current directory")
-				agedBodyFilePath = "./aged_body.txt"
-			}
-
-			agedBodyContent, err := os.ReadFile(agedBodyFilePath)
+			agedBodyContent, err := os.ReadFile(constant["AGED_BODY_FILE_PATH"])
 			if err != nil {
 				zap.L().Error("failed to read file for AGED_BODY_FILE_PATH")
 				zap.L().Error("is the filesytem read-only or does the file exist?")
@@ -163,21 +152,14 @@ func invokeHotKeys() {
 			zap.L().Info("hotkey: CTRL + F is down")
 		// Create a new backlog title and paste it to the clipboard
 		case <-pasteFDRTitle.Keyup():
-			FDRTitle := os.Getenv("FDR_TITLE_PREFIX") + " | " + time.Now().Format("2006/01/02")
+			FDRTitle := constant["FDR_TITLE_PREFIX"] + " | " + time.Now().Format("2006/01/02")
 			clipboard.Write(clipboard.FmtText, bytes.NewBufferString(FDRTitle).Bytes())
 			zap.L().Info("hotkey: CTRL + R is up")
 		case <-pasteFDRBody.Keydown():
 			zap.L().Info("hotkey: CTRL + SHIFT + R is down")
 		// Read the file and paste it to the clipboard for the FDR body
 		case <-pasteFDRBody.Keyup():
-			fdrBodyFilePath := os.Getenv("FDR_BODY_FILE_PATH")
-			// If this environment variable isn't set then lookup from the current directory
-			if fdrBodyFilePath == "" {
-				zap.L().Warn("AGED_BODY_FILE_PATH is not set, looking up from the current directory")
-				fdrBodyFilePath = "./aged_body.txt"
-			}
-
-			FDRBodyContent, err := os.ReadFile(fdrBodyFilePath)
+			FDRBodyContent, err := os.ReadFile(constant["FDR_BODY_FILE_PATH"])
 			if err != nil {
 				zap.L().Error("failed to read file for FDR_BODY_FILE_PATH")
 				zap.L().Error("is the filesytem read-only or does the file exist?")
@@ -208,6 +190,8 @@ func main() {
 	app.Get("/", controllers.IndexController)
 	app.Get("/api/v1/version", controllers.VersionController)
 	app.Get("/api/v1/env", controllers.EnvController)
+	// Check if the environment variables are set and set them if they are not
+	constants.CheckAndSetEnvVars()
 	// Run these functions in a goroutine
 	// These keybind watchers are being watched on a infinite for loop. It seems better to run them in a goroutine because of this
 	go func() {
@@ -219,6 +203,7 @@ func main() {
 		portEnvVar = "3080"
 	}
 
+	zap.L().Info("server is running on port " + portEnvVar)
 	fiberErr := app.Listen(":" + portEnvVar)
 
 	if fiberErr != nil {
