@@ -21,29 +21,17 @@ var Constants = Constantstruct{
 	},
 }
 
-// "BACKLOG_TITLE_PREFIX":   os.Getenv("BACKLOG_TITLE_PREFIX"),
-// "BACKLOG_BODY_FILE_PATH": os.Getenv("BACKLOG_BODY_FILE_PATH"),
-// "AGED_TITLE_PREFIX":      os.Getenv("AGED_TITLE_PREFIX"),
-// "AGED_BODY_FILE_PATH":    os.Getenv("AGED_BODY_FILE_PATH"),
-// "FDR_TITLE_PREFIX":       os.Getenv("FDR_TITLE_PREFIX"),
-// "FDR_BODY_FILE_PATH":     os.Getenv("FDR_BODY_FILE_PATH"),
-
-
 func CheckAndSetEnvVars() {
 	// Load the environment variables from the .env file
 	err := godotenv.Load()
 
 	if err != nil {
-		zap.L().Warn("Unable to load variables from .env - does the file exist in the current directory?")
-		zap.L().Warn(err.Error())
-		zap.L().Warn("Executing fallback command via `exec.Command` to attempt to source environment variables into the current shell")
-		//exec.Command("cmd", "/c", "start", "powershell", "echo", "Error: "+err.Error()).Run()
-		// // Check if the environment variables are set and set them if they are not
-		// constants.CheckAndSetEnvVars()
+		zap.L().Error("Unable to load variables from .env - does the file exist in the current directory?")
+		zap.L().Error(err.Error())
 	} else {
 		zap.L().Info("Successfully loaded variables from .env")
 	}
-	
+
 	// Set default values if the environment variables are not set - this is done through loading the .env file
 	// If that fails, we try to execute a command to source the environment variables into the current shell
 	// If that also fails, we will set some default values
