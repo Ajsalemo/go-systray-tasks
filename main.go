@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -196,6 +198,31 @@ func main() {
 	// These keybind watchers are being watched on a infinite for loop. It seems better to run them in a goroutine because of this
 	go func() {
 		invokeHotKeys()
+	}()
+
+	// Notify the application of the below signals to be handled on shutdown
+	s := make(chan os.Signal, 1)
+	signal.Notify(s,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	// Goroutine to clean up prior to shutting down
+	go func() {
+		sig := <-s
+		switch sig {
+		case os.Interrupt:
+			zap.L().Warn("CTRL+C / os.Interrupt recieved, shutting down the application..")
+			app.Shutdown()
+		case syscall.SIGTERM:
+			zap.L().Warn("SIGTERM recieved.., shutting down the application..")
+			app.Shutdown()
+		case syscall.SIGQUIT:
+			zap.L().Warn("SIGQUIT recieved.., shutting down the application..")
+			app.Shutdown()
+		case syscall.SIGINT:
+			zap.L().Warn("SIGINT recieved.., shutting down the application..")
+			app.Shutdown()
+		}
 	}()
 	// Change this to a not commonly used port by default to avoid issues with other local services
 	portEnvVar := os.Getenv("PORT")

@@ -31,7 +31,6 @@ func CheckAndSetEnvVars() {
 	} else {
 		zap.L().Info("Successfully loaded variables from .env")
 	}
-
 	// Set default values if the environment variables are not set - this is done through loading the .env file
 	// If that fails, we try to execute a command to source the environment variables into the current shell
 	// If that also fails, we will set some default values
@@ -86,3 +85,6 @@ func CheckAndSetEnvVars() {
 		zap.L().Info("FDR_BODY_FILE_PATH is set to " + "'" + Constants.EnvVar["FDR_BODY_FILE_PATH"] + "'")
 	}
 }
+
+
+
