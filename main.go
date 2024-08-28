@@ -188,7 +188,6 @@ func main() {
 
 	app := fiber.New()
 	app.Use(pprof.New())
-	// TODO - expose pprof endpoints for debugging/metrics to see if these for loops are going to cause a problem
 	app.Get("/", controllers.IndexController)
 	app.Get("/api/v1/version", controllers.VersionController)
 	app.Get("/api/v1/env", controllers.EnvController)
