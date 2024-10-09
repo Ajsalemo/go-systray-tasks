@@ -26,7 +26,7 @@ var Constants = Constantstruct{
 func CheckAndSetEnvVars() {
 	// Load the environment variables from the .env file
 	// This is explicitly set to look in $GOPATH/bin and the current directory ($PWD)
-	err := godotenv.Load(fmt.Sprintf("%s/bin/.env", os.Getenv("GOPATH")), fmt.Sprintf("%s/.env", os.Getenv("PWD")))
+	err := godotenv.Load(fmt.Sprintf("%s/.env", os.Getenv("PWD")), fmt.Sprintf("%s/bin/.env", os.Getenv("GOPATH")))
 
 	if err != nil {
 		zap.L().Error("Unable to load variables from .env - does the file exist in the current directory?")
