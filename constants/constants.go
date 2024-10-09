@@ -1,9 +1,11 @@
 package constants
 
 import (
-	"go.uber.org/zap"
+	"fmt"
 	"os"
+
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 type Constantstruct struct {
@@ -23,7 +25,8 @@ var Constants = Constantstruct{
 
 func CheckAndSetEnvVars() {
 	// Load the environment variables from the .env file
-	err := godotenv.Load()
+	// This is explicitly set to look in $GOPATH/bin and the current directory ($PWD)
+	err := godotenv.Load(fmt.Sprintf("%s/bin/.env", os.Getenv("GOPATH")), fmt.Sprintf("%s/.env", os.Getenv("PWD")))
 
 	if err != nil {
 		zap.L().Error("Unable to load variables from .env - does the file exist in the current directory?")
